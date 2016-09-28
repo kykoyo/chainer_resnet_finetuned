@@ -3,32 +3,32 @@
 ## Caffeの学習済みモデルを読み込んで画像認識
 
 1. cloneしたのちフォルダに移動  
-```
-$ git clone https://github.com/ta-oyama/chainer_tutorial.git  
-$ cd chainer_tutorial
-```
+    ```
+    $ git clone https://github.com/ta-oyama/chainer_tutorial.git  
+    $ cd chainer_tutorial
+    ```
 
 2. データセットをダウンロードし解凍  
-```
-$ wget http://www.vision.caltech.edu/Image_Datasets/Caltech101/101_ObjectCategories.tar.gz  
-$ tar xzvf 101_ObjectCategories.tar.gz
-```
+    ```
+    $ wget http://www.vision.caltech.edu/Image_Datasets/Caltech101/101_ObjectCategories.tar.gz  
+    $ tar xzvf 101_ObjectCategories.tar.gz
+    ```
 
 3. ILSVRC2012のラベルリストlabels.txtを作成  
-```
-$ mkdir ilsvrc12; cd ilsvrc12  
-$ wget https://github.com/BVLC/caffe/raw/master/data/ilsvrc12/get_ilsvrc_aux.sh  
-$ chmod +x get_ilsvrc_aux.sh  
-$ ./get_ilsvrc_aux.sh  
-$ cat synset_words.txt |awk '{print $2;}' > ../labels_ilsvrc.txt  
-$ cd ..; rm -r ilsvrc12  
-```
+    ```
+    $ mkdir ilsvrc12; cd ilsvrc12  
+    $ wget https://github.com/BVLC/caffe/raw/master/data/ilsvrc12/get_ilsvrc_aux.sh  
+    $ chmod +x get_ilsvrc_aux.sh  
+    $ ./get_ilsvrc_aux.sh  
+    $ cat synset_words.txt |awk '{print $2;}' > ../labels_ilsvrc.txt  
+    $ cd ..; rm -r ilsvrc12  
+    ```
 
 4. ILSVRC2012データセットでalexnetを用いた学習済みのcaffeのモデルをダウンロード(時間がかかる）
-```  
-$ python download_model.py alexnet  
-$ mkdir pretrained_models; mv bvlc_alexnet.caffemodel pretrained_models/  
-```
+    ```  
+    $ python download_model.py alexnet  
+    $ mkdir pretrained_models; mv bvlc_alexnet.caffemodel pretrained_models/  
+    ```
 
 5. ILSVRC2012データセットの平均画像(ilsvrc_2012_mean.npy)をダウンロード  
 `$ python download_mean_file.py`  
