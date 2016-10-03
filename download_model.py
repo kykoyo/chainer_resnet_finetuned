@@ -34,7 +34,7 @@ def get_url_filename(model_type):
                            'alexnet, caffenet, googlenet and resnet.')
     return url, name
 
-def downroad_modelfile(url, name, model_type):
+def download_modelfile(url, name, model_type):
     print('Downloading model file...')
     six.moves.urllib.request.urlretrieve(url, name)
     if model_type == 'resnet':
@@ -46,7 +46,7 @@ def main():
     args = get_args()
     print(args.model_type)
     url, name = get_url_filename(model_type=args.model_type)
-    downroad_modelfile(url, name, model_type=args.model_type)
+    download_modelfile(url, name, model_type=args.model_type)
 
 if __name__ == '__main__':
     main()
