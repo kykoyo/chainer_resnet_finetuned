@@ -31,38 +31,12 @@ class PreprocessedDataset(chainer.dataset.DatasetMixin):
         #     - Cropping (random or center rectangular)
         #     - Random flip
         #     - Scaling to [0, 1] value
-        crop_size = self.crop_size
-
         image, label = self.base[i]
-        _, h, w = image.shape
-
-        if self.random:
-            # Randomly crop a region and flip the image
-            top = random.randint(0, h - crop_size - 1)
-            left = random.randint(0, w - crop_size - 1)
-            if random.randint(0, 1):
-                image = image[:, :, ::-1]
-        else:
-            # Crop the center
-            top = (h - crop_size) // 2
-            left = (w - crop_size) // 2
-        bottom = top + crop_size
-        right = left + crop_size
-
-        image = image[:, top:bottom, left:right]
-        image -= self.mean[:, top:bottom, left:right]
-        image /= 255
+        image = util.preprocess_image(image=image, crop_size=self.crop_size,
+                    mean_image=self.mean, normalize=True, random=self.random)
         return image, label
 
-
-def main():
-    archs = {
-        'alex': alex.Alex,
-        'googlenet': googlenet.GoogLeNet,
-        'googlenetbn': googlenetbn.GoogLeNetBN,
-        'nin': nin.NIN
-    }
-
+def get_args(archs):
     parser = argparse.ArgumentParser(
         description='Learning convnet from ILSVRC2012 dataset')
     parser.add_argument('train', help='Path to training image-label list file')
@@ -96,6 +70,16 @@ def main():
     parser.add_argument('--test', action='store_true')
     parser.set_defaults(test=False)
     args = parser.parse_args()
+    return args
+
+def main():
+    archs = {
+        'alex': alex.Alex,
+        'googlenet': googlenet.GoogLeNet,
+        'googlenetbn': googlenetbn.GoogLeNetBN,
+        'nin': nin.NIN
+    }
+    args = get_args(archs)
 
     # Initialize the model to train
     model = archs[args.arch]()
@@ -103,7 +87,7 @@ def main():
         print('Load model from', args.initmodel)
         initmodel = pickle.load(open(args.initmodel))
         util.copy_model(initmodel, model)
-        #chainer.serializers.load_npz(args.initmodel, model)
+        #chainer.serializers.load_hdf5(args.initmodel, model)
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make the GPU current
         model.to_gpu()
@@ -120,7 +104,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.MomentumSGD(lr=0.01, momentum=0.9)
+    optimizer = chainer.optimizers.Adam()
     optimizer.setup(model)
 
     # Set up a trainer
@@ -151,11 +135,13 @@ def main():
 
     if args.resume:
         print('Load optimizer state from', args.resume)
-        chainer.serializers.load_npz(args.resume, trainer)
+        chainer.serializers.load_hdf5(args.resume, trainer)
 
     trainer.run()
 
+    print('Saving model...')
     chainer.serializers.save_hdf5(os.path.join(args.out, args.output_model), model)
+    print('Saving trainer...')
     chainer.serializers.save_hdf5(os.path.join(args.out, args.output_optimizer), trainer)
 
 if __name__ == '__main__':

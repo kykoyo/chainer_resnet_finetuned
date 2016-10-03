@@ -15,9 +15,15 @@ import shutil
 
 import util
 
-def check_dirs(dir_path):
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
+def get_args():
+    parser = argparse.ArgumentParser(description='converter')
+    parser.add_argument('--root', default='.')
+    parser.add_argument('--output_dir', default='.')
+    parser.add_argument('--output_train_imglabel_file', default='./train_label.txt')
+    parser.add_argument('--output_val_imglabel_file', default='./val_label.txt')
+    parser.add_argument('--val_freq', type=int, default=10)
+    args = parser.parse_args()
+    return args
 
 def write_imglabel_list(imglabel_list, out_filepath):
     """
@@ -29,9 +35,9 @@ def write_imglabel_list(imglabel_list, out_filepath):
         logging.info('wrote {0}'.format(out_filepath))
 
 def separate_train_val(args):
-    check_dirs(args.output_dir)
-    check_dirs(os.path.join(args.output_dir, 'train'))
-    check_dirs(os.path.join(args.output_dir, 'val'))
+    util.check_dirs(args.output_dir)
+    util.check_dirs(os.path.join(args.output_dir, 'train'))
+    util.check_dirs(os.path.join(args.output_dir, 'val'))
     directories = os.listdir(args.root)
     categories_sorted = sorted(directories, key=str.lower)
     cate_label_dict = {}
@@ -69,15 +75,7 @@ def separate_train_val(args):
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
-
-    parser = argparse.ArgumentParser(description='converter')
-    parser.add_argument('--root', default='.')
-    parser.add_argument('--output_dir', default='.')
-    parser.add_argument('--output_train_imglabel_file', default='./train_label.txt')
-    parser.add_argument('--output_val_imglabel_file', default='./val_label.txt')
-    parser.add_argument('--val_freq', type=int, default=10)
-    args = parser.parse_args()
-
+    args = get_args()
     separate_train_val(args)
 
 if __name__ == '__main__':

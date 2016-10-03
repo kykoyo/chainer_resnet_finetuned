@@ -1,3 +1,4 @@
+import os
 from random import randint
 
 import numpy as np
@@ -7,19 +8,15 @@ from scipy.ndimage import zoom
 from skimage.transform import resize
 from chainer import link
 
-def load_image(path, crop_size, mean_image, normalize=True, random=True):
+def check_dirs(dir_path):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+def preprocess_image(image, crop_size, mean_image, normalize=True, random=True):
     # It applies following preprocesses:
     #     - Cropping (random or center rectangular)
     #     - Random flip
     #     - Scaling to [0, 1] value
-
-    with Image.open(path) as f:
-        image = np.asarray(f, dtype=np.float32)
-    if image.ndim == 2:
-        # image is greyscale
-        image = image[:, :, np.newaxis]
-    image = image.transpose(2, 0, 1)
-
     _, h, w = image.shape
 
     if random:
@@ -39,6 +36,17 @@ def load_image(path, crop_size, mean_image, normalize=True, random=True):
     image -= mean_image[:, top:bottom, left:right]
     if normalize:
         image /= 255
+    return image
+
+def load_image(path, crop_size, mean_image, normalize=True, random=True):
+    with Image.open(path) as f:
+        image = np.asarray(f, dtype=np.float32)
+    if image.ndim == 2:
+        # image is greyscale
+        image = image[:, :, np.newaxis]
+    image = image.transpose(2, 0, 1)
+    image = preprocess_image(image=image, crop_size=crop_size, 
+                mean_image=mean_image, normalize=normalize, random=random)
     return image
 
 def copy_model(src, dst):

@@ -15,25 +15,16 @@ import util
 class Classifier(object):
     """
     Classifier extends Net for image class prediction
-    by scaling, center cropping, or oversampling.
-    Parameters
-    ----------
-    image_dims : dimensions to scale input for cropping/sampling.
-        Default is to scale to net input size for whole-image crop.
     """
     def __init__(self, gpu, model, initmodel):
         self.gpu = gpu
         self.model = model
         if 'caffe' in initmodel:
             self._load_caffemodel(initmodel)
-            self._use_caffemodel = True
+            self.use_caffemodel = True
         else:
             self._load_chainermodel(initmodel)
-            self._use_caffemodel = False
-
-        if self.gpu != -1:
-            self.model.to_gpu(self.gpu)
-
+            self.use_caffemodel = False
 
     def _load_caffemodel(self, initmodel):
         print('Reading caffe model...')
@@ -50,8 +41,11 @@ class Classifier(object):
             self.initmodel = initmodel
             S.load_hdf5(initmodel, self.model)
 
+        if self.gpu != -1:
+            self.model.to_gpu(self.gpu)
+
     def predict(self, x):
-        if self._use_caffemodel:
+        if self.use_caffemodel:
             y, = self.caffemodel(inputs={'data': x}, outputs=['fc8'], train=False)
             score = F.softmax(y)
             return score

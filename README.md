@@ -46,13 +46,16 @@
 1. データセットをtrain用とvalidation用に分ける(それぞれtrain_val_image/train/*, train_val_image/val/*の下)。さらにtrain, valそれぞれの画像のパスとラベルがペアになったファイルtrain_labels.txt, val_label.txtを作成(--rootの引数にとったディレクトリのサブディレクトリをラベルとすることを想定しており、大文字小文字関係なくアルファベット順に0から順番にラベルを振っている。なのでこれで学習したモデルで分類を行いたい場合は読み込むラベルを大文字小文字関係なくアルファベット順に並べておく必要がある。）  
 `$ python separate_train_val.py --root 101_ObjectCategories/ --output_dir train_val_img --val_freq 10`
 
-2. 平均画像の作成、および訓練画像として使用するために、リサイズした訓練画像データフォルダを作成。また、そのデータフォルダにて新たにつけた画像の名前とラベルのリストが書かれたtrainlabel_pairs.txtを作成。  
-`python resize.py -i train_label.txt -o resized_train_imgs --rename 1 --label 1`
+2. 平均画像の作成、および訓練画像として使用するために、リサイズした訓練画像データフォルダを作成。また、そのデータフォルダにて新たにつけた画像の名前とラベルのリストが書かれたtrainlabel_pairs.txtを作成。validation用の画像に関してもリサイズをし、label_pair.txtも同様にして作成。
+    ```
+    python resize.py -i train_label.txt -o resized_train_imgs --rename 1 --label 1 --out_imglabel ./trainlabel_pairs.txt
+    python resize.py -i val_label.txt -o resized_val_imgs --rename 1 --label 1 --out_imglabel ./vallabel_pairs.txt
+    ```
 
 3. 平均画像(mean.npy)を作成  
 `python compute_mean.py trainlabel_pairs.txt --root . --output mean.npy`
 
-4. caffeの学習済みモデルをalexnet.pkl,alexnet.h5として保存しておく。(訓練する際、全く同じネットワークの構成で出力数も同じ場合はhdf5として保存してtrain_caltech101.pyの中でchainer.serializers.load_npz(args.initmodel, model)を使えばよい。それ以外の場合はpickleで保存し、train_caltech101.pyの中でinitmodel = pickle.load(open(args.initmodel)); util.copy_model(initmodel, model)を使って共通部分のパラメータのみコピーする )  
+4. caffeの学習済みモデルをalexnet.pkl,alexnet.h5として保存しておく。(訓練する際、全く同じネットワークの構成で出力数も同じ場合はhdf5として保存してtrain_caltech101.pyの中でchainer.serializers.load_hdf5(args.initmodel, model)を使えばよい。それ以外の場合はpickleで保存し、train_caltech101.pyの中でinitmodel = pickle.load(open(args.initmodel)); util.copy_model(initmodel, model)を使って共通部分のパラメータのみコピーする )  
 `$ python caffe_to_chainermodel.py`
 
 5. 学習を行う  

@@ -23,22 +23,15 @@ class Alex(chainer.Chain):
         self.train = True
 
     def __call__(self, x, t):
-        h = F.max_pooling_2d(F.relu(
-            F.local_response_normalization(self.conv1(x))), 3, stride=2)
-        h = F.max_pooling_2d(F.relu(
-            F.local_response_normalization(self.conv2(h))), 3, stride=2)
-        h = F.relu(self.conv3(h))
-        h = F.relu(self.conv4(h))
-        h = F.max_pooling_2d(F.relu(self.conv5(h)), 3, stride=2)
-        h = F.dropout(F.relu(self.fc6(h)), train=self.train)
-        h = F.dropout(F.relu(self.fc7(h)), train=self.train)
-        h = self.fc8(h)
-
+        h = self.forward(x)
         loss = F.softmax_cross_entropy(h, t)
         chainer.report({'loss': loss, 'acuracy': F.accuracy(h, t)}, self)
         return loss
 
     def predict(self, x):
+        return F.softmax(self.forward(x))
+
+    def forward(self, x):
         h = F.max_pooling_2d(F.relu(
             F.local_response_normalization(self.conv1(x))), 3, stride=2)
         h = F.max_pooling_2d(F.relu(
@@ -49,4 +42,4 @@ class Alex(chainer.Chain):
         h = F.dropout(F.relu(self.fc6(h)), train=self.train)
         h = F.dropout(F.relu(self.fc7(h)), train=self.train)
         h = self.fc8(h)
-        return F.softmax(h)
+        return h

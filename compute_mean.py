@@ -3,9 +3,18 @@ import argparse
 import sys
 
 import numpy as np
-
 import chainer
 
+def get_args():
+    parser = argparse.ArgumentParser(description='Compute images mean array')
+    parser.add_argument('dataset',
+                        help='Path to training image-label list file')
+    parser.add_argument('--root', '-R', default='.',
+                        help='Root directory path of image files')
+    parser.add_argument('--output', '-o', default='mean.npy',
+                        help='path to output mean array')
+    args = parser.parse_args()
+    return args
 
 def compute_mean(dataset):
     print('compute mean image')
@@ -18,21 +27,11 @@ def compute_mean(dataset):
     sys.stderr.write('\n')
     return sum_image / N
 
-
 def main():
-    parser = argparse.ArgumentParser(description='Compute images mean array')
-    parser.add_argument('dataset',
-                        help='Path to training image-label list file')
-    parser.add_argument('--root', '-R', default='.',
-                        help='Root directory path of image files')
-    parser.add_argument('--output', '-o', default='mean.npy',
-                        help='path to output mean array')
-    args = parser.parse_args()
-
+    args = get_args()
     dataset = chainer.datasets.LabeledImageDataset(args.dataset, args.root)
     mean = compute_mean(dataset)
     np.save(args.output, mean)
-
 
 if __name__ == '__main__':
     main()
