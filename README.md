@@ -48,23 +48,23 @@
 
 2. 平均画像の作成、および訓練画像として使用するために、リサイズした訓練画像データフォルダを作成。また、そのデータフォルダにて新たにつけた画像の名前とラベルのリストが書かれたtrainlabel_pairs.txtを作成。validation用の画像に関してもリサイズをし、label_pair.txtも同様にして作成。
     ```
-    python resize.py -i train_label.txt -o resized_train_imgs --rename 1 --label 1 --out_imglabel ./trainlabel_pairs.txt
-    python resize.py -i val_label.txt -o resized_val_imgs --rename 1 --label 1 --out_imglabel ./vallabel_pairs.txt
+    $ python resize.py -i train_label.txt -o resized_train_imgs --rename 1 --label 1 --out_imglabel ./trainlabel_pairs.txt
+    $ python resize.py -i val_label.txt -o resized_val_imgs --rename 1 --label 1 --out_imglabel ./vallabel_pairs.txt
     ```
 
 3. 平均画像(mean.npy)を作成  
-`python compute_mean.py trainlabel_pairs.txt --root . --output mean.npy`
+`$ python compute_mean.py trainlabel_pairs.txt --root . --output mean.npy`
 
 4. caffeの学習済みモデルをalexnet.pkl,alexnet.h5として保存しておく。(訓練する際、全く同じネットワークの構成で出力数も同じ場合はhdf5として保存してtrain_caltech101.pyの中でchainer.serializers.load_hdf5(args.initmodel, model)を使えばよい。それ以外の場合はpickleで保存し、train_caltech101.pyの中でinitmodel = pickle.load(open(args.initmodel)); util.copy_model(initmodel, model)を使って共通部分のパラメータのみコピーする )  
 `$ python caffe_to_chainermodel.py`
 
 5. 学習を行う  
-`python train_caltech101.py trainlabel_pairs.txt val_label.txt --arch alex --epoch 150 --gpu 0 --initmodel pretrained_models/alexnet.pkl --loaderjob 4 --mean mean.npy --out result --output_model caltech101_alexnet.h5 --output_optimizer optimizer_caltech101_alexnet.h5`
+`$ python train_caltech101.py trainlabel_pairs.txt val_label.txt --arch alex --epoch 150 --gpu 0 --initmodel pretrained_models/alexnet.pkl --loaderjob 4 --mean mean.npy --out result --output_model caltech101_alexnet.h5 --output_optimizer optimizer_caltech101_alexnet.h5`
 
 ## ファインチューニングで学習したモデルを用いて画像認識  
 
 1. ラベルリストを作成  
-`python make_labels.py -i 101_ObjectCategories/ -o labels_caltech101.txt`
+`$ python make_labels.py -i 101_ObjectCategories/ -o labels_caltech101.txt`
 
 2. 画像認識のテストに用いる画像のフォルダを作成し、リサイズした画像をその中に入れる  
 `$ python resize.py -i 101_ObjectCategories/airplanes/*.jpg -o resized/airplanes/`
