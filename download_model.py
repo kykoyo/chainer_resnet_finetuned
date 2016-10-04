@@ -5,7 +5,7 @@ import zipfile
 
 import six
 
-def get_args()
+def get_args():
     parser = argparse.ArgumentParser(
         description='Download a Caffe reference model')
     parser.add_argument('model_type',
