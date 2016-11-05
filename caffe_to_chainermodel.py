@@ -14,7 +14,7 @@ func = CaffeFunction(osp.join(model_dir,"bvlc_alexnet.caffemodel")) # read caffe
 print("Writing as chainer model with hdf5...")
 s.save_hdf5(osp.join(model_dir,"alexnet.h5"), func) # write as chainer model
 print("Writing as chainer model with pickle...")
-save_path = osp.join(model_dir, "alexnet.plt")
+save_path = osp.join(model_dir, "alexnet.pkl")
 with open(save_path, 'wb') as f:
   pickle.dump(func, f, protocol=-1)
 print("Done")
