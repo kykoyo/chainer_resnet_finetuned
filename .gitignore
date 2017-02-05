@@ -87,3 +87,11 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+101_ObjectCategories.tar.gz
+101_ObjectCategories/
+ilsvrc_2012_mean.npy
+labels_ilsvrc.txt
+pretrained_models/
+resized/
+

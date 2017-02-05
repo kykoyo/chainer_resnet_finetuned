@@ -39,8 +39,8 @@ def preprocess_image(image, crop_size, mean_image, normalize=True, random=True):
     return image
 
 def load_image(path, crop_size, mean_image, normalize=True, random=True):
-    with Image.open(path) as f:
-        image = np.asarray(f, dtype=np.float32)
+    f = Image.open(path)
+    image = np.asarray(f, dtype=np.float32)
     if image.ndim == 2:
         # image is greyscale
         image = image[:, :, np.newaxis]
