@@ -9,8 +9,8 @@ def get_args():
     parser = argparse.ArgumentParser(
         description='Download a Caffe reference model')
     parser.add_argument('model_type',
-                        choices=('alexnet', 'caffenet', 'googlenet', 'resnet'),
-                        help='Model type (alexnet, caffenet, googlenet, resnet)')
+                        choices=('alexnet', 'caffenet', 'googlenet', 'resnet', 'vggnet'),
+                        help='Model type (alexnet, caffenet, googlenet, resnet, vggnet)')
     args = parser.parse_args()
     return args
 
@@ -29,9 +29,12 @@ def get_url_filename(model_type):
         url = 'http://research.microsoft.com/en-us/um/people/kahe/resnet/' \
               'models.zip'
         name = 'models.zip'
+    elif model_type == 'vggnet':
+        url = 'http://www.cs.bu.edu/groups/ivc/data/SOS/VGG16_SalObjSub.caffemodel'
+        name = 'vgg16.caffemodel'
     else:
         raise RuntimeError('Invalid model type. Choose from '
-                           'alexnet, caffenet, googlenet and resnet.')
+                           'alexnet, caffenet, googlenet, vggnet and resnet.')
     return url, name
 
 def download_modelfile(url, name, model_type):

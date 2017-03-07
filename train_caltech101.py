@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 import argparse
 import os
@@ -11,7 +12,7 @@ import chainer
 from chainer import training
 from chainer.training import extensions
 
-from archs import alex, googlenet, googlenetbn, nin
+from archs import alex, googlenet, googlenetbn, nin, vgg
 import util
 
 class PreprocessedDataset(chainer.dataset.DatasetMixin):
@@ -37,36 +38,36 @@ class PreprocessedDataset(chainer.dataset.DatasetMixin):
         return image, label
 
 def get_args(archs):
-    parser = argparse.ArgumentParser(
-        description='Learning convnet from ILSVRC2012 dataset')
-    parser.add_argument('train', help='Path to training image-label list file')
-    parser.add_argument('val', help='Path to validation image-label list file')
+    parser = argparse.ArgumentParser(description='Learning convnet from ILSVRC2012 dataset')
+
+    parser.add_argument('train', help='Path to training image-label list file') #訓練用のラベルリスト
+    parser.add_argument('val', help='Path to validation image-label list file') #テスト用のラベルリスト
     parser.add_argument('--arch', '-a', choices=archs.keys(), default='nin',
-                        help='Convnet architecture')
+                        help='Convnet architecture') #ネットワークの種類
     parser.add_argument('--batchsize', '-B', type=int, default=32,
-                        help='Learning minibatch size')
+                        help='Learning minibatch size') #ミニバッチのサイズ
     parser.add_argument('--epoch', '-E', type=int, default=10,
-                        help='Number of epochs to train')
+                        help='Number of epochs to train') #エポック数
     parser.add_argument('--gpu', '-g', type=int, default=-1,
-                        help='GPU ID (negative value indicates CPU')
+                        help='GPU ID (negative value indicates CPU') #使用するGPU
     parser.add_argument('--initmodel',
-                        help='Initialize the model from given file')
+                        help='Initialize the model from given file') #フィアンチューニングを使用する際、出力のクラス数が変わる場合 .pkl
     parser.add_argument('--loaderjob', '-j', type=int,
-                        help='Number of parallel data loading processes')
+                        help='Number of parallel data loading processes') #並行してロードするプロセス数
     parser.add_argument('--mean', '-m', default='mean.npy',
-                        help='Mean file (computed by compute_mean.py)')
+                        help='Mean file (computed by compute_mean.py)') #平均画像ファイル
     parser.add_argument('--resume', '-r', default='',
-                        help='Initialize the trainer from given file')
+                        help='Initialize the trainer from given file') #ファインチューニングを使用する際、出力数が変わらない場合 .h5
     parser.add_argument('--out', '-o', default='result',
-                        help='Output directory')
+                        help='Output directory') #出力ディレクトリ
     parser.add_argument('--output_model',  default='final_model.h5',
-                        help='Output model name')
+                        help='Output model name') #出力モデル
     parser.add_argument('--output_optimizer',  default='final_optimizer.h5',
-                        help='Output optimizer name')
+                        help='Output optimizer name') #出力最適化名
     parser.add_argument('--root', '-R', default='.',
-                        help='Root directory path of image files')
+                        help='Root directory path of image files') #画像ファイルのルートディレクトリ
     parser.add_argument('--val_batchsize', '-b', type=int, default=250,
-                        help='Validation minibatch size')
+                        help='Validation minibatch size') #検証時のミニバッチのサイズ
     parser.add_argument('--test', action='store_true')
     parser.set_defaults(test=False)
     args = parser.parse_args()
@@ -77,7 +78,8 @@ def main():
         'alex': alex.Alex,
         'googlenet': googlenet.GoogLeNet,
         'googlenetbn': googlenetbn.GoogLeNetBN,
-        'nin': nin.NIN
+        'nin': nin.NIN,
+        'vgg': vgg.VGG
     }
     args = get_args(archs)
 
@@ -94,7 +96,7 @@ def main():
 
     # Load the datasets and mean file
     mean = np.load(args.mean)
-    train = PreprocessedDataset(args.train, args.root, mean, model.insize)
+    train = PreprocessedDataset(args.train, args.root, mean, model.insize, False)
     val = PreprocessedDataset(args.val, args.root, mean, model.insize, False)
     # These iterators load the images with subprocesses running in parallel to
     # the training/validation.
@@ -104,14 +106,15 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.Adam()
+    optimizer = chainer.optimizers.Adam()  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
     optimizer.setup(model)
+    optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))  # l2正則化
 
     # Set up a trainer
     updater = training.StandardUpdater(train_iter, optimizer, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), args.out)
 
-    val_interval = (10 if args.test else 100000), 'iteration'
+    val_interval = (10 if args.test else 1000), 'iteration'
     log_interval = (10 if args.test else 1000), 'iteration'
 
     # Copy the chain with shared parameters to flip 'train' flag only in test

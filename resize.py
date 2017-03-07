@@ -62,7 +62,8 @@ def resize_imgs(img_files, label, out_dirpath, rename=False, make_imglabel=False
         if img_path.find('.jpg') == -1:
             continue
         img = cv2.imread(img_path)
-        cropped_img = resize(img, target_shape=(256,256))
+#        cropped_img = resize(img, target_shape=(256,256))
+        cropped_img = img
 
         #save image
         if rename:

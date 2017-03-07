@@ -15,7 +15,7 @@ from chainer import Variable
 
 import util
 from classifier import Classifier
-from archs import alex, googlenet, googlenetbn, nin
+from archs import alex, googlenet, googlenetbn, nin, vgg
 
 def get_args(archs):
     parser = argparse.ArgumentParser()
@@ -53,7 +53,8 @@ def main():
         'alex': alex.Alex,
         'googlenet': googlenet.GoogLeNet,
         'googlenetbn': googlenetbn.GoogLeNetBN,
-        'nin': nin.NIN
+        'nin': nin.NIN,
+        'vgg': vgg.VGG
     }
     args = get_args(archs)
     model = archs[args.arch]()

@@ -21,15 +21,15 @@ class GoogLeNet(chainer.Chain):
             inc4e=L.Inception(528, 256, 160, 320, 32, 128, 128),
             inc5a=L.Inception(832, 256, 160, 320, 32, 128, 128),
             inc5b=L.Inception(832, 384, 192, 384, 48, 128, 128),
-            loss3_fc=L.Linear(1024, 1000),
+            loss3_fc=L.Linear(None, 25),
 
             loss1_conv=L.Convolution2D(512, 128, 1),
-            loss1_fc1=L.Linear(4 * 4 * 128, 1024),
-            loss1_fc2=L.Linear(1024, 1000),
+            loss1_fc1=L.Linear(None, 1024),
+            loss1_fc2=L.Linear(1024, 25),
 
             loss2_conv=L.Convolution2D(528, 128, 1),
-            loss2_fc1=L.Linear(4 * 4 * 128, 1024),
-            loss2_fc2=L.Linear(1024, 1000)
+            loss2_fc1=L.Linear(None, 1024),
+            loss2_fc2=L.Linear(1024, 25)
         )
         self.train = True
 
@@ -49,6 +49,7 @@ class GoogLeNet(chainer.Chain):
 
         l = F.average_pooling_2d(h, 5, stride=3)
         l = F.relu(self.loss1_conv(l))
+        l = F.spatial_pyramid_pooling_2d(l, 3, F.MaxPooling2D)
         l = F.relu(self.loss1_fc1(l))
         l = self.loss1_fc2(l)
         loss1 = F.softmax_cross_entropy(l, t)
@@ -59,6 +60,7 @@ class GoogLeNet(chainer.Chain):
 
         l = F.average_pooling_2d(h, 5, stride=3)
         l = F.relu(self.loss2_conv(l))
+        l = F.spatial_pyramid_pooling_2d(l, 3, F.MaxPooling2D)
         l = F.relu(self.loss2_fc1(l))
         l = self.loss2_fc2(l)
         loss2 = F.softmax_cross_entropy(l, t)
@@ -69,6 +71,7 @@ class GoogLeNet(chainer.Chain):
         h = self.inc5b(h)
 
         h = F.average_pooling_2d(h, 7, stride=1)
+        h = F.spatial_pyramid_pooling_2d(h, 3, F.MaxPooling2D)
         h = self.loss3_fc(F.dropout(h, 0.4, train=self.train))
         loss3 = F.softmax_cross_entropy(h, t)
 
