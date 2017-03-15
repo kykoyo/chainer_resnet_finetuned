@@ -19,24 +19,23 @@ def preprocess_image(image, crop_size, mean_image, normalize=True, random=True):
     #     - Scaling to [0, 1] value
     _, h, w = image.shape
 
-    # if random:
-    #     # Randomly crop a region and flip the image
-    #     top = randint(0, h - crop_size - 1)
-    #     left = randint(0, w - crop_size - 1)
-    #     if randint(0, 1):
-    #         image = image[:, :, ::-1]
-    # else:
+    if random:
+        # Randomly crop a region and flip the image
+        top = randint(0, h - crop_size - 1)
+        left = randint(0, w - crop_size - 1)
+        if randint(0, 1):
+            image = image[:, :, ::-1]
+    else:
         # Crop the center
-    #     # top = (h - crop_size) // 2
-    #     # left = (w - crop_size) // 2
-    # bottom = top + crop_size
-    # right = left + crop_size
+        top = (h - crop_size) // 2
+        left = (w - crop_size) // 2
+    bottom = top + crop_size
+    right = left + crop_size
 
-    image = image
-    # image = image[:, top:bottom, left:right]
-    # image -= mean_image[:, top:bottom, left:right]
-    # if normalize:
-    #     image /= 255
+    image = image[:, top:bottom, left:right]
+    image -= mean_image[:, top:bottom, left:right]
+    if normalize:
+        image /= 255
     return image
 
 def load_image(path, crop_size, mean_image, normalize=True, random=True):

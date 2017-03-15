@@ -42,7 +42,6 @@ class VGG(chainer.Chain):
         self.train = False
 
     def __call__(self, x, t):
-        print x.shape
         h = F.relu(self.conv1_1(x))
         h = F.relu(self.conv1_2(h))
         h = F.max_pooling_2d(h, 2, stride=2)
@@ -65,10 +64,8 @@ class VGG(chainer.Chain):
         h = F.relu(self.conv5_2(h))
         h = F.relu(self.conv5_3(h))
         # h = F.max_pooling_2d(h, 2, stride=2)
-        print h.shape
 
         h = F.spatial_pyramid_pooling_2d(h, 2, F.MaxPooling2D)
-        print(h.shape)
         h = self.fc6(h)
         h = F.dropout(F.relu(h), train=self.train, ratio=0.5)
         h = F.dropout(F.relu(self.fc7(h)), train=self.train, ratio=0.5)

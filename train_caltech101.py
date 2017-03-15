@@ -12,7 +12,7 @@ import chainer
 from chainer import training
 from chainer.training import extensions
 
-from archs import alex, googlenet, googlenetbn, nin, vgg
+from archs import alex, googlenet, googlenetbn, nin, vgg, ResNet101
 import util
 
 class PreprocessedDataset(chainer.dataset.DatasetMixin):
@@ -79,7 +79,8 @@ def main():
         'googlenet': googlenet.GoogLeNet,
         'googlenetbn': googlenetbn.GoogLeNetBN,
         'nin': nin.NIN,
-        'vgg': vgg.VGG
+        'vgg': vgg.VGG,
+        'resnet': ResNet101.ResNet
     }
     args = get_args(archs)
 
@@ -96,7 +97,7 @@ def main():
 
     # Load the datasets and mean file
     mean = np.load(args.mean)
-    train = PreprocessedDataset(args.train, args.root, mean, model.insize, False)
+    train = PreprocessedDataset(args.train, args.root, mean, model.insize)
     val = PreprocessedDataset(args.val, args.root, mean, model.insize, False)
     # These iterators load the images with subprocesses running in parallel to
     # the training/validation.
@@ -106,7 +107,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.Adam()  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
+    optimizer = chainer.optimizers.MomentumSGD(lr=0.0001)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))  # l2正則化
 
@@ -115,14 +116,21 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), args.out)
 
     val_interval = (10 if args.test else 1000), 'iteration'
-    log_interval = (10 if args.test else 1000), 'iteration'
+    log_interval = (10 if args.test else 100), 'iteration'
 
     # Copy the chain with shared parameters to flip 'train' flag only in test
     eval_model = model.copy()
     eval_model.train = False
 
+    def lr_shift():  # DenseNet specific!
+        if updater.epoch == 50 or updater.epoch == 100:
+            optimizer.lr *= 0.1
+        return optimizer.lr
+
     trainer.extend(extensions.Evaluator(val_iter, eval_model, device=args.gpu),
                    trigger=val_interval)
+    trainer.extend(extensions.observe_value(
+        'lr', lambda _: lr_shift()), trigger=(1, 'epoch'))
     trainer.extend(extensions.dump_graph('main/loss'))
     trainer.extend(extensions.snapshot(), trigger=val_interval)
     trainer.extend(extensions.snapshot_object(

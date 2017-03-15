@@ -10,11 +10,11 @@ import util
 model_dir = 'pretrained_models'
 util.check_dirs(model_dir)
 print("Reading caffe model...")
-func = CaffeFunction(osp.join(model_dir,"vgg16.caffemodel")) # read caffe model
+func = CaffeFunction(osp.join(model_dir,"bvlc_googlenet.caffemodel")) # read caffe model
 print("Writing as chainer model with hdf5...")
-s.save_hdf5(osp.join(model_dir,"vggnet.h5"), func) # write as chainer model
+s.save_hdf5(osp.join(model_dir,"googlenet.h5"), func) # write as chainer model
 print("Writing as chainer model with pickle...")
-save_path = osp.join(model_dir, "vggnet.pkl")
+save_path = osp.join(model_dir, "googlenet.pkl")
 with open(save_path, 'wb') as f:
   pickle.dump(func, f, protocol=-1)
 print("Done")
