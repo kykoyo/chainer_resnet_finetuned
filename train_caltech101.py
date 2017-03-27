@@ -5,14 +5,14 @@ import argparse
 import os
 import random
 import cPickle as pickle
-
+import magic
 import numpy as np
 
 import chainer
 from chainer import training
 from chainer.training import extensions
 
-from archs import alex, googlenet, googlenetbn, nin, vgg, ResNet101
+from archs import alex, googlenet, googlenet_c, googlenetbn, nin, vgg, ResNet101, ResNet101_c
 import util
 
 class PreprocessedDataset(chainer.dataset.DatasetMixin):
@@ -77,20 +77,30 @@ def main():
     archs = {
         'alex': alex.Alex,
         'googlenet': googlenet.GoogLeNet,
+        'googlenet_c': googlenet_c.GoogLeNet,
         'googlenetbn': googlenetbn.GoogLeNetBN,
         'nin': nin.NIN,
         'vgg': vgg.VGG,
-        'resnet': ResNet101.ResNet
+        'resnet': ResNet101.ResNet,
+        'resnet_c': ResNet101_c.ResNet
     }
     args = get_args(archs)
 
     # Initialize the model to train
     model = archs[args.arch]()
+    initmodel = archs['resnet']()
     if args.initmodel:
-        print('Load model from', args.initmodel)
-        initmodel = pickle.load(open(args.initmodel))
-        util.copy_model(initmodel, model)
-        #chainer.serializers.load_hdf5(args.initmodel, model)
+        print('Initializing the model')
+        file_type = magic.from_file(args.initmodel, mime=True)
+        if 'hdf' in file_type:
+            chainer.serializers.load_hdf5(args.initmodel, initmodel)
+        elif 'zip' in file_type:
+            chainer.serializers.load_npz(args.initmodel, initmodel)
+        util.copy_chainermodel(initmodel, model)
+        # print('Load model from', args.initmodel)
+        # initmodel = pickle.load(open(args.initmodel))
+        # util.copy_chainermodel(initmodel, model)
+        # # chainer.serializers.load_hdf5(args.initmodel, model)
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make the GPU current
         model.to_gpu()
@@ -107,7 +117,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.MomentumSGD(lr=0.0001)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
+    optimizer = chainer.optimizers.MomentumSGD(lr=0.00005)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))  # l2正則化
 
@@ -116,14 +126,14 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), args.out)
 
     val_interval = (10 if args.test else 1000), 'iteration'
-    log_interval = (10 if args.test else 100), 'iteration'
+    log_interval = (10 if args.test else 1000), 'iteration'
 
     # Copy the chain with shared parameters to flip 'train' flag only in test
     eval_model = model.copy()
     eval_model.train = False
 
     def lr_shift():  # DenseNet specific!
-        if updater.epoch == 50 or updater.epoch == 100:
+        if updater.epoch == 100 or updater.epoch == 125:
             optimizer.lr *= 0.1
         return optimizer.lr
 

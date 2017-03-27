@@ -21,15 +21,15 @@ class GoogLeNet(chainer.Chain):
             inc4e=L.Inception(528, 256, 160, 320, 32, 128, 128),
             inc5a=L.Inception(832, 256, 160, 320, 32, 128, 128),
             inc5b=L.Inception(832, 384, 192, 384, 48, 128, 128),
-            loss3_fc=L.Linear(1024, 1000),
+            loss3_fc=L.Linear(1024, 25),
 
             loss1_conv=L.Convolution2D(512, 128, 1),
             loss1_fc1=L.Linear(2048, 1024),
-            loss1_fc2=L.Linear(1024, 1000),
+            loss1_fc2=L.Linear(1024, 25),
 
             loss2_conv=L.Convolution2D(528, 128, 1),
             loss2_fc1=L.Linear(2048, 1024),
-            loss2_fc2=L.Linear(1024, 1000)
+            loss2_fc2=L.Linear(1024, 25)
         )
         self.train = True
 

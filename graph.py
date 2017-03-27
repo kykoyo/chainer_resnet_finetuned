@@ -11,16 +11,18 @@ import os
 
 def create_fig(out_dir):
     # load data
-    data = json.load(open(os.path.join(out_dir, 'log')))
+    data = json.load(open(os.path.join(out_dir, 'log_googlenet_f_momentum_00005')))
     train_loss = []
     valid_loss = []
     train_error = []
     valid_error = []
     for d in data:
-        train_loss.append(d['main/loss'])
-        valid_loss.append(d['validation/main/loss'])
-        train_error.append(1 - d['main/accuracy'])
-        valid_error.append(1 - d['validation/main/accuracy'])
+        print d
+        if 'validation/main/loss' in d:
+            train_loss.append(d['main/loss'])
+            valid_loss.append(d['validation/main/loss'])
+            train_error.append(1 - d['main/accuracy'])
+            valid_error.append(1 - d['validation/main/accuracy'])
     x = range(1, len(train_loss) + 1)
 
     # show graph
@@ -29,13 +31,13 @@ def create_fig(out_dir):
     axL.plot(x, train_error, label='train error')
     axL.set_title(
         'Error (min. valid error: {0:.3f}%)'.format(min(valid_error) * 100))
-    axL.set_xlabel('epochs')
+    axL.set_xlabel('iter')
     axL.set_ylabel('error')
     axL.legend(loc='upper right')
     axR.plot(x, valid_loss, label='valid loss')
     axR.plot(x, train_loss, label='train loss')
     axR.set_title('Loss')
-    axR.set_xlabel('epochs')
+    axR.set_xlabel('iter')
     axR.set_ylabel('loss')
     axR.legend(loc='upper right')
     fig.savefig(os.path.join(out_dir, 'graph.png'))
