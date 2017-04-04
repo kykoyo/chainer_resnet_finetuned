@@ -110,9 +110,9 @@ Doxyfile
 assorted_raw/
 resized*
 
-
-
-
+download_model.py
+download_mean_file.py
+make_labels.py
 
 
 

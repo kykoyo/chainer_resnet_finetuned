@@ -89,7 +89,7 @@ def main():
 
     # Initialize the model to train
     model = archs[args.arch]()
-    initmodel = archs['resnet']()
+    initmodel = archs['resnet']() # copyする元となるモデル
     if args.initmodel:
         print('Initializing the model')
         file_type = magic.from_file(args.initmodel, mime=True)
@@ -98,10 +98,6 @@ def main():
         elif 'zip' in file_type:
             chainer.serializers.load_npz(args.initmodel, initmodel)
         util.copy_chainermodel(initmodel, model)
-        # print('Load model from', args.initmodel)
-        # initmodel = pickle.load(open(args.initmodel))
-        # util.copy_chainermodel(initmodel, model)
-        # # chainer.serializers.load_hdf5(args.initmodel, model)
     if args.gpu >= 0:
         chainer.cuda.get_device(args.gpu).use()  # Make the GPU current
         model.to_gpu()
@@ -118,7 +114,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.NesterovAG(lr=0.0005, momentum=0.9)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
+    optimizer = chainer.optimizers.NesterovAG(lr=0.0005, momentum=0.9)
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))  # l2正則化
 
@@ -159,7 +155,8 @@ def main():
         print('Load optimizer state from', args.resume)
         chainer.serializers.load_hdf5(args.resume, trainer)
 
-    serializers.load_npz('result/snapshot_iter_48000', trainer)
+    # 学習を途中で止めて再開する場合はsnapshot_iter_xxxxを任意のファイル名に変更
+    # serializers.load_npz('result/snapshot_iter_xxxx', trainer)
     trainer.run()
 
     print('Saving model...')

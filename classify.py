@@ -53,9 +53,6 @@ def print_result(score, categories, top_k=10):
         print('#%d | %s | %4.1f%%' % (rank, name, score * 100))
 
 
-# def create_score_csv(df, score, index):
-
-
 def main():
     archs = {
         'alex': alex.Alex,
@@ -87,7 +84,7 @@ def main():
         df = df.append([index], ignore_index=True)
         # print_result(score=score, categories=categories, top_k=10)
 
-    df.to_csv('submit.tsv', sep='\t')
+    df.to_csv('submit.csv')
     print 'Saved to submit.tsv!!'
 
 
