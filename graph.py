@@ -11,7 +11,7 @@ import os
 
 def create_fig(out_dir):
     # load data
-    data = json.load(open(os.path.join(out_dir, 'log_googlenet_f_momentum_00005')))
+    data = json.load(open(os.path.join(out_dir, 'log')))
     train_loss = []
     valid_loss = []
     train_error = []

@@ -9,10 +9,10 @@ import magic
 import numpy as np
 
 import chainer
-from chainer import training
+from chainer import training, serializers
 from chainer.training import extensions
 
-from archs import alex, googlenet, googlenet_c, googlenetbn, nin, vgg, ResNet101, ResNet101_c
+from archs import alex, googlenet, googlenet_c, googlenetbn, nin, vgg, ResNet101, ResNet101_c, slice_resnet101
 import util
 
 class PreprocessedDataset(chainer.dataset.DatasetMixin):
@@ -82,7 +82,8 @@ def main():
         'nin': nin.NIN,
         'vgg': vgg.VGG,
         'resnet': ResNet101.ResNet,
-        'resnet_c': ResNet101_c.ResNet
+        'resnet_c': ResNet101_c.ResNet,
+        'slice_resnet': slice_resnet101.SliceResNet
     }
     args = get_args(archs)
 
@@ -117,7 +118,7 @@ def main():
         val, args.val_batchsize, repeat=False, n_processes=args.loaderjob)
 
     # Set up an optimizer
-    optimizer = chainer.optimizers.MomentumSGD(lr=0.00005)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
+    optimizer = chainer.optimizers.NesterovAG(lr=0.0005, momentum=0.9)  # パラメータの学習方法は慣性項付きの確率的勾配法で, 学習率は0.0005に設定.
     optimizer.setup(model)
     optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))  # l2正則化
 
@@ -133,7 +134,7 @@ def main():
     eval_model.train = False
 
     def lr_shift():  # DenseNet specific!
-        if updater.epoch == 100 or updater.epoch == 125:
+        if updater.epoch == 150 or updater.epoch == 175:
             optimizer.lr *= 0.1
         return optimizer.lr
 
@@ -158,6 +159,7 @@ def main():
         print('Load optimizer state from', args.resume)
         chainer.serializers.load_hdf5(args.resume, trainer)
 
+    serializers.load_npz('result/snapshot_iter_48000', trainer)
     trainer.run()
 
     print('Saving model...')

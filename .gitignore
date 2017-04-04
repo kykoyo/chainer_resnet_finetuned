@@ -103,15 +103,12 @@ latex/
 resized_train_imgs/
 resized_val_imgs/
 result/
-result_googlenet_momentum_00001/
-result_spp_googlenet_adam/
-result_vgg_spp/
 train_val_img/
 train_val_img_cookpad/
 Doxyfile
 
 assorted_raw/
-
+resized*
 
 
 

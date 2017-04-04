@@ -70,20 +70,51 @@ class Block(chainer.Chain):
         return x
 
 
-class ResNet(chainer.Chain):
+class SliceNet(chainer.Chain):
+    """Slice branch network
+
+    see https://arxiv.org/abs/1612.06543
+    """
+    def __init__(self, slice_axis='h', conv_outch=320, shortside_conv_ksize=5, longside_pooling_ksize=5, pooling_stride=3):
+        if slice_axis == 'h':
+            ksize = (shortside_conv_ksize, 224)
+        elif slice_axis == 'v':
+            ksize = (224, shortside_conv_ksize)
+        super(SliceNet, self).__init__(
+            conv1_1 = L.Convolution2D(3, conv_outch, ksize=ksize, stride=1, pad=0),
+            bn1_1 = L.BatchNormalization(conv_outch)
+        )
+        self.train = True
+        self.slice_axis = slice_axis
+        self.longside_pooling_ksize = longside_pooling_ksize
+        self.pooling_stride = pooling_stride
+
+    def __call__(self, x):
+        if self.slice_axis == 'h':
+            ksize=(self.longside_pooling_ksize, 1)
+        elif self.slice_axis == 'v':
+            ksize=(1, self.longside_pooling_ksize)
+        h = F.relu(self.bn1_1(self.conv1_1(x), test=not self.train), use_cudnn=False)
+        h = F.max_pooling_2d(h, ksize=ksize, stride=self.pooling_stride)
+        return h
+
+
+class SliceResNet(chainer.Chain):
 
     insize = 224
 
     def __init__(self):
         w = math.sqrt(2)
-        super(ResNet, self).__init__(
+        super(SliceResNet, self).__init__(
+            slicenet_h = SliceNet(slice_axis='h'),
+            #slicenet_v = SliceNet(slice_axis='v')
             conv1=L.Convolution2D(3, 64, 7, 2, 3, w, nobias=True),
             bn1=L.BatchNormalization(64),
             res2=Block(3, 64, 64, 256, 1),
             res3=Block(4, 256, 128, 512),
             res4=Block(23, 512, 256, 1024),
             res5=Block(3, 1024, 512, 2048),
-            fc=L.Linear(2048, 25),
+            fc=L.Linear(25408, 25),
         )
         self.train = True
 
@@ -92,14 +123,33 @@ class ResNet(chainer.Chain):
         self.accuracy = None
 
     def __call__(self, x, t):
-        h = self.bn1(self.conv1(x), test=not self.train)
-        h = F.max_pooling_2d(F.relu(h), 3, stride=2)
-        h = self.res2(h, self.train)
-        h = self.res3(h, self.train)
-        h = self.res4(h, self.train)
-        h = self.res5(h, self.train)
-        h = F.average_pooling_2d(h, 7, stride=1)
+        self.clear()
+        batchsize = x.shape[0]
+
+        # residual branch
+        hr = self.bn1(self.conv1(x), test=not self.train)
+        hr = F.max_pooling_2d(F.relu(hr), 3, stride=2)
+        hr = self.res2(hr, self.train)
+        hr = self.res3(hr, self.train)
+        hr = self.res4(hr, self.train)
+        hr = self.res5(hr, self.train)
+        hr = F.average_pooling_2d(hr, 7, stride=1)
+        hr = F.reshape(hr, shape=(batchsize, -1))
+        
+        # Slice branch
+        hs_h = self.slicenet_h(x)
+        hs_h = F.reshape(hs_h, shape=(batchsize, -1))
+        #hs_v = self.slicenet_v(x)
+        #hs_v = F.reshape(hs_h, shape=(batchsize, -1))
+
+        # concat
+        h = F.concat([hr, hs_h], axis=1) # or  h = F.concat([hr, hs_h, hs_v], axis=1)
+
         h = self.fc(h)
+
+        loss = F.softmax_cross_entropy(h, t)
+        chainer.report({'loss': loss, 'accuracy': F.accuracy(h, t)}, self)
+        return loss
 
         # if self.train:
         #     self.loss = F.softmax_cross_entropy(h, t)
@@ -107,23 +157,3 @@ class ResNet(chainer.Chain):
         #     return self.loss
         # else:
         #     return h
-
-        loss = F.softmax_cross_entropy(h, t)
-        chainer.report({'loss': loss, 'accuracy': F.accuracy(h, t)}, self)
-        return loss
-
-
-    def predict(self, x):
-        return F.softmax(self.forward(x))
-
-    def forward(self, x):
-        h = self.bn1(self.conv1(x), test=not self.train)
-        h = F.max_pooling_2d(F.relu(h), 3, stride=2)
-        h = self.res2(h, self.train)
-        h = self.res3(h, self.train)
-        h = self.res4(h, self.train)
-        h = self.res5(h, self.train)
-        h = F.average_pooling_2d(h, 7, stride=1)
-        h = self.fc(h)
-
-        return h

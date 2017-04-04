@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import cPickle as pickle
+import magic
 
 import numpy as np
 import chainer
@@ -37,9 +38,12 @@ class Classifier(object):
         if 'pkl' in initmodel:
             self.initmodel = pickle.load(open(initmodel))
             util.copy_model(self.initmodel, self.model)
-        else:
+        elif 'hdf' in magic.from_file(initmodel, mime=True):
             self.initmodel = initmodel
             S.load_hdf5(initmodel, self.model)
+        else:
+            self.initmodel = initmodel
+            S.load_npz(initmodel, self.model)
 
         if self.gpu != -1:
             self.model.to_gpu(self.gpu)

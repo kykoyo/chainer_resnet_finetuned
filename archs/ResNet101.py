@@ -111,3 +111,7 @@ class ResNet(chainer.Chain):
         loss = F.softmax_cross_entropy(h, t)
         chainer.report({'loss': loss, 'accuracy': F.accuracy(h, t)}, self)
         return loss
+
+
+    def predict(self, x):
+        return F.softmax(self.__call__(x,None))
