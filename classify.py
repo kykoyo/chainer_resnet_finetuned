@@ -16,7 +16,7 @@ from chainer import Variable
 
 import util
 from classifier import Classifier
-from archs import alex, googlenet, googlenetbn, nin, vgg, ResNet101_c
+from archs import ResNet101_c, slice_resnet101
 
 
 def get_args(archs):
@@ -27,7 +27,7 @@ def get_args(archs):
                         help='Convnet architecture')
     parser.add_argument('--initmodel',
                         help='Initialize the model from given file')
-    # parser.add_argument('--img_files', nargs='+', required=True)
+    parser.add_argument('--img_list', required=True)
     # parser.add_argument('--label_file', default='labels.txt')
     parser.add_argument('--mean', default='mean.npy',
                         help='Path to the mean file (computed by compute_mean.py)')
@@ -55,25 +55,21 @@ def print_result(score, categories, top_k=10):
 
 def main():
     archs = {
-        'alex': alex.Alex,
-        'googlenet': googlenet.GoogLeNet,
-        'googlenetbn': googlenetbn.GoogLeNetBN,
-        'nin': nin.NIN,
-        'vgg': vgg.VGG,
-        'resnet_c': ResNet101_c.ResNet
+        'resnet_c': ResNet101_c.ResNet,
+        'slice_resnet': slice_resnet101.SliceResNet
     }
     args = get_args(archs)
     model = archs[args.arch]()
     mean_image = np.load(args.mean)
     classifier = Classifier(gpu=args.gpu, model=model, initmodel=args.initmodel)
     normalize = False if classifier.use_caffemodel else True
-    file_lists = pd.read_csv("data_cookpad/clf_test.tsv", delimiter='\t')
+    file_lists = pd.read_csv(args.img_list, delimiter='\t')
     # categories = pd.read_csv("data_cookpad/clf_category_master.tsv")
     # categories = np.loadtxt(args.label_file, str, delimiter="\t")
     df = pd.DataFrame()
     print('cropwidth', 256 - model.insize)
     for img_file in file_lists.file_name:
-        img_file = osp.join("resized_tests", img_file)
+        # img_file = osp.join("resized_tests", img_file)
         print('classify', img_file)
         img = util.load_image(path=img_file, crop_size=model.insize, normalize=normalize, mean_image=mean_image)
         x = img_to_input(img, model=model, gpu=args.gpu)
@@ -85,7 +81,7 @@ def main():
         # print_result(score=score, categories=categories, top_k=10)
 
     df.to_csv('submit.csv')
-    print 'Saved to submit.tsv!!'
+    print 'Saved to submit.csv!!'
 
 
 if __name__ == '__main__':

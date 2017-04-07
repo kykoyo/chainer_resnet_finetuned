@@ -12,7 +12,7 @@ import chainer
 from chainer import training, serializers
 from chainer.training import extensions
 
-from archs import alex, googlenet, googlenet_c, googlenetbn, nin, vgg, ResNet101, ResNet101_c, slice_resnet101
+from archs import ResNet101, ResNet101_c, slice_resnet101
 import util
 
 class PreprocessedDataset(chainer.dataset.DatasetMixin):
@@ -75,12 +75,6 @@ def get_args(archs):
 
 def main():
     archs = {
-        'alex': alex.Alex,
-        'googlenet': googlenet.GoogLeNet,
-        'googlenet_c': googlenet_c.GoogLeNet,
-        'googlenetbn': googlenetbn.GoogLeNetBN,
-        'nin': nin.NIN,
-        'vgg': vgg.VGG,
         'resnet': ResNet101.ResNet,
         'resnet_c': ResNet101_c.ResNet,
         'slice_resnet': slice_resnet101.SliceResNet
