@@ -11,6 +11,7 @@
 ```
 mkdir assorted
 python assort_files_to_label_dir.py -i data_cookpad/clf_train_images_labeled_1/ -o assorted -l data_cookpad/clf_category_master.tsv -p data_cookpad/clf_train_master.tsv
+python assort_files_to_label_dir.py -i data_cookpad/clf_train_images_labeled_2/ -o assorted -l data_cookpad/clf_category_master.tsv -p data_cookpad/clf_train_master.tsv
 ```
 フォルダ構成
 ```
