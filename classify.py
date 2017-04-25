@@ -23,12 +23,12 @@ def get_args(archs):
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', default=0, type=int,
                         help='if -1, use cpu only')
-    parser.add_argument('--arch', '-a', choices=archs.keys(), default='alex',
+    parser.add_argument('--arch', '-a', choices=archs.keys(), default='resnet_c',
                         help='Convnet architecture')
     parser.add_argument('--initmodel',
                         help='Initialize the model from given file')
     parser.add_argument('--img_list', required=True)
-    # parser.add_argument('--label_file', default='labels.txt')
+    parser.add_argument('--root', default='resized_tests', help='root directory of img files')
     parser.add_argument('--mean', default='mean.npy',
                         help='Path to the mean file (computed by compute_mean.py)')
     args = parser.parse_args()
@@ -69,7 +69,7 @@ def main():
     df = pd.DataFrame()
     print('cropwidth', 256 - model.insize)
     for img_file in file_lists.file_name:
-        # img_file = osp.join("resized_tests", img_file)
+        img_file = osp.join(args.root, img_file)
         print('classify', img_file)
         img = util.load_image(path=img_file, crop_size=model.insize, normalize=normalize, mean_image=mean_image)
         x = img_to_input(img, model=model, gpu=args.gpu)

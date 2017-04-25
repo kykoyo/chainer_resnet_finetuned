@@ -56,23 +56,19 @@ mv ResNet101.model pretrained_models/
 ### 学習
 
 ```
-python train_caltech101.py trainlabel_pairs.txt vallabel_pairs.txt --arch resnet_c --epoch 150 --gpu 0 --initmodel pretrained_models/ResNet101.model --loaderjob 4 --mean mean.npy --out result --output_model cookpad_resnet.h5 --output_optimizer optimizer_cookpad_resnet.h5
+python train_cookpad.py trainlabel_pairs.txt vallabel_pairs.txt --arch resnet_c --epoch 150 --gpu 0 --initmodel pretrained_models/ResNet101.model --loaderjob 4 --mean mean.npy --out result --output_model cookpad_resnet.h5 --output_optimizer optimizer_cookpad_resnet.h5
 ```
 
 ### 分類
-ラベルのリストを作成する。
-```
-python make_labels.py -i 101_ObjectCategories/ -o labels_caltech101.txt
-```
-
 リサイズしてそれをテスト用のフォルダに入れる。
 ```
-python resize.py -i test_datasets/ -o resized_tests/
+python resize.py -i data_cookpad/clf_test_images_1/*.jpg -o resized_tests/
+python resize.py -i data_cookpad/clf_test_images_2/*.jpg -o resized_tests/
 ```
 
 画像を分類してcsvファイルに出力する。
 ```
-python classify.py --gpu 0 --arch resnet_c --initmodel result/cookpad_resnet.h5 --img_files resized_tests/*.jpg --mean mean.npy
+python classify.py --gpu 0 --arch resnet_c --initmodel result/cookpad_resnet.h5 --img_list data_cookpad/clf_test.tsv --root resized_tests --mean mean.npy
 ```
 
 

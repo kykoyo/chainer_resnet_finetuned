@@ -107,9 +107,10 @@ train_val_img/
 train_val_img_cookpad/
 Doxyfile
 
-assorted_raw/
+assorted*
 resized*
 
+testlabel_pairs.txt
 download_model.py
 download_mean_file.py
 make_labels.py
